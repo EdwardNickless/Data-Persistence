@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,22 +8,37 @@ public class MainManager : MonoBehaviour
     public int LineCount = 6;
     public Rigidbody Ball;
 
-    public Text ScoreText;
+    public Text ScoreTextCurrent;
+    public Text ScoreTextPersistent;
     public GameObject GameOverText;
-    
+    public GameManager GameManager;
+
     private bool m_Started = false;
     private int m_Points;
-    
+    private string m_playerName;
+
     private bool m_GameOver = false;
 
-    
-    // Start is called before the first frame update
     void Start()
     {
+        GameManager = FindObjectOfType<GameManager>();
+
+        m_playerName = GameManager.CurrentPlayerName;
+        ScoreTextCurrent.text = $"{m_playerName}'s score : {m_Points}";
+
+        if (ScoreManager.Instance.TopScore != 0)
+        {
+            ScoreTextPersistent.text = $"Highscore: {ScoreManager.Instance.TopPlayer} : {ScoreManager.Instance.TopScore}";
+        }
+        else
+        {
+            ScoreTextPersistent.text = "";
+        }
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
-        
-        int[] pointCountArray = new [] {1,1,2,2,5,5};
+
+        int[] pointCountArray = new[] { 1, 1, 2, 2, 5, 5 };
         for (int i = 0; i < LineCount; ++i)
         {
             for (int x = 0; x < perLine; ++x)
@@ -59,18 +72,28 @@ public class MainManager : MonoBehaviour
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
+            else if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                GameManager.ExitGame();
+            }
         }
     }
 
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreTextCurrent.text = $"{m_playerName}'s score : {m_Points}";
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+
+        if (m_Points > ScoreManager.Instance.TopScore)
+        {
+            ScoreManager.Instance.UpdateLeaderBoard(m_playerName, m_Points);
+            ScoreTextPersistent.text = $"Highscore: {ScoreManager.Instance.TopPlayer} : {ScoreManager.Instance.TopScore}";
+        }
     }
 }
